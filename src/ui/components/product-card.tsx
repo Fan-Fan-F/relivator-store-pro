@@ -4,7 +4,9 @@ import { Heart, ShoppingCart, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
+import { toast } from "sonner";
 
+import { useCart } from "~/lib/hooks/use-cart";
 import { cn } from "~/lib/cn";
 import { Badge } from "~/ui/primitives/badge";
 import { Button } from "~/ui/primitives/button";
@@ -37,19 +39,31 @@ export function ProductCard({
   variant = "default",
   ...props
 }: ProductCardProps) {
+  const { addItem } = useCart();
   const [isHovered, setIsHovered] = React.useState(false);
   const [isAddingToCart, setIsAddingToCart] = React.useState(false);
   const [isInWishlist, setIsInWishlist] = React.useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    setIsAddingToCart(true);
     if (onAddToCart) {
-      setIsAddingToCart(true);
-      // Simulate API call
       setTimeout(() => {
         onAddToCart(product.id);
         setIsAddingToCart(false);
-      }, 600);
+      }, 400);
+    } else {
+      setTimeout(() => {
+        addItem({
+          category: product.category,
+          id: product.id,
+          image: product.image,
+          name: product.name,
+          price: product.price,
+        });
+        toast.success(`${product.name} added to cart`);
+        setIsAddingToCart(false);
+      }, 400);
     }
   };
 

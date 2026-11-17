@@ -33,12 +33,12 @@ export function PaymentForm({
     setError(null);
     
     try {
-      let url = "/auth/checkout";
+      let url = "/checkout";
       
-      if (productSlug) {
-        url += `/${productSlug}`;
-      } else if (productId) {
+      if (productId) {
         url += `?productId=${productId}`;
+      } else if (productSlug) {
+        url += `?plan=${productSlug}`;
       }
       
       router.push(url);

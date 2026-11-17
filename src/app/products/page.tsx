@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { toast } from "sonner";
 
 import { useCart } from "~/lib/hooks/use-cart";
 import { ProductCard } from "~/ui/components/product-card";
@@ -147,6 +148,7 @@ export default function ProductsPage() {
           },
           1, // (quantity) always adds 1 item to the cart
         );
+        toast.success(`${product.name} added to cart`);
       }
     },
     [addItem],

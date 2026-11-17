@@ -1,12 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingCart, X } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { cn } from "~/lib/cn";
+import { useCart } from "~/lib/hooks/use-cart";
 import { useMediaQuery } from "~/lib/hooks/use-media-query";
 import { Badge } from "~/ui/primitives/badge";
 import { Button } from "~/ui/primitives/button";
@@ -26,51 +28,44 @@ import {
   SheetTrigger,
 } from "~/ui/primitives/sheet";
 
-export interface CartItem {
-  category: string;
-  id: string;
-  image: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
-
 interface CartProps {
   className?: string;
-  mockCart: CartItem[];
 }
 
-export function CartClient({ className, mockCart }: CartProps) {
+export function CartClient({ className }: CartProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
-  const [cartItems, setCartItems] = React.useState<CartItem[]>(mockCart);
   const [isMounted, setIsMounted] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  const {
+    items: cartItems,
+    itemCount: totalItems,
+    subtotal,
+    updateQuantity,
+    removeItem,
+    clearCart,
+  } = useCart();
 
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
-  );
-
   const handleUpdateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item,
-      ),
-    );
+    updateQuantity(id, newQuantity);
   };
 
   const handleRemoveItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    removeItem(id);
   };
 
   const handleClearCart = () => {
-    setCartItems([]);
+    clearCart();
+  };
+
+  const handleGoToCheckout = () => {
+    setIsOpen(false);
+    router.push("/checkout");
   };
 
   const CartTrigger = (
@@ -115,7 +110,7 @@ export function CartClient({ className, mockCart }: CartProps) {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6">
+        <div className="flex-1 overflow-y-auto px-6 max-h-[60vh]">
           <AnimatePresence>
             {cartItems.length === 0 ? (
               <motion.div
@@ -134,18 +129,18 @@ export function CartClient({ className, mockCart }: CartProps) {
                 </div>
                 <h3 className="mb-2 text-lg font-medium">Your cart is empty</h3>
                 <p className="mb-6 text-center text-sm text-muted-foreground">
-                  Looks like you haven't added anything to your cart yet.
+                  Looks like you haven&apos;t added anything to your cart yet.
                 </p>
                 {isDesktop ? (
                   <SheetClose asChild>
                     <Link href="/products">
-                      <Button>Browse Products</Button>
+                      <Button onClick={() => setIsOpen(false)}>Browse Products</Button>
                     </Link>
                   </SheetClose>
                 ) : (
                   <DrawerClose asChild>
                     <Link href="/products">
-                      <Button>Browse Products</Button>
+                      <Button onClick={() => setIsOpen(false)}>Browse Products</Button>
                     </Link>
                   </DrawerClose>
                 )}
@@ -166,13 +161,16 @@ export function CartClient({ className, mockCart }: CartProps) {
                     layout
                     transition={{ duration: 0.15 }}
                   >
-                    <div className="relative h-20 w-20 overflow-hidden rounded">
-                      <Image
-                        alt={item.name}
-                        className="object-cover"
-                        fill
-                        src={item.image}
-                      />
+                    <div className="relative h-20 w-20 overflow-hidden rounded bg-muted">
+                      {item.image && (
+                        <Image
+                          alt={item.name}
+                          className="object-cover"
+                          fill
+                          sizes="80px"
+                          src={item.image}
+                        />
+                      )}
                     </div>
                     <div className="ml-4 flex flex-1 flex-col justify-between">
                       <div>
@@ -196,7 +194,7 @@ export function CartClient({ className, mockCart }: CartProps) {
                             onClick={() => handleRemoveItem(item.id)}
                             type="button"
                           >
-                            <X className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Remove item</span>
                           </button>
                         </div>
@@ -266,7 +264,7 @@ export function CartClient({ className, mockCart }: CartProps) {
                 <span className="font-medium">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Shipping</span>
+                <span className="text-muted-foreground">Estimated Shipping</span>
                 <span className="font-medium">Calculated at checkout</span>
               </div>
               <Separator />
@@ -276,8 +274,12 @@ export function CartClient({ className, mockCart }: CartProps) {
                   ${subtotal.toFixed(2)}
                 </span>
               </div>
-              <Button className="w-full" size="lg">
-                Checkout
+              <Button
+                className="w-full"
+                onClick={handleGoToCheckout}
+                size="lg"
+              >
+                Proceed to Checkout
               </Button>
               <div className="flex items-center justify-between">
                 {isDesktop ? (
@@ -292,7 +294,7 @@ export function CartClient({ className, mockCart }: CartProps) {
                 <Button
                   className="ml-2"
                   onClick={handleClearCart}
-                  variant="outline"
+                  variant="ghost"
                 >
                   Clear Cart
                 </Button>
@@ -314,16 +316,6 @@ export function CartClient({ className, mockCart }: CartProps) {
           variant="outline"
         >
           <ShoppingCart className="h-4 w-4" />
-          {totalItems > 0 && (
-            <Badge
-              className={`
-                absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-[10px]
-              `}
-              variant="default"
-            >
-              {totalItems}
-            </Badge>
-          )}
         </Button>
       </div>
     );
@@ -335,7 +327,7 @@ export function CartClient({ className, mockCart }: CartProps) {
         <Sheet onOpenChange={setIsOpen} open={isOpen}>
           <SheetTrigger asChild>{CartTrigger}</SheetTrigger>
           <SheetContent className="flex w-[400px] flex-col p-0">
-            <SheetHeader>
+            <SheetHeader className="sr-only">
               <SheetTitle>Shopping Cart</SheetTitle>
             </SheetHeader>
             {CartContent}

@@ -29,14 +29,17 @@ export function Header({ showAuth = true }: HeaderProps) {
   const mainNavigation = [
     { href: "/", name: "Home" },
     { href: "/products", name: "Products" },
+    { href: "/checkout", name: "Checkout" },
+    { href: "/admin/orders", name: "Admin" },
   ];
 
   const dashboardNavigation = [
     { href: "/dashboard/stats", name: "Stats" },
+    { href: "/dashboard/orders", name: "Orders" },
     { href: "/dashboard/profile", name: "Profile" },
     { href: "/dashboard/settings", name: "Settings" },
     { href: "/dashboard/uploads", name: "Uploads" },
-    { href: "/admin/summary", name: "Admin" },
+    { href: "/admin/orders", name: "Admin" },
   ];
 
   const isDashboard =
